@@ -146,6 +146,7 @@ export const AppContextProvider = ({ children }) => {
         signer: state.signer,
         connect,
         disconnect,
+        gasEstimationForAll,
       }}
     >
       {children}

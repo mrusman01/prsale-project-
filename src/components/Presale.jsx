@@ -14,6 +14,7 @@ import {
 } from "../ConnectivityAssets/hooks";
 import { AppContext } from "../utils";
 import { formatUnits, parseUnits } from "@ethersproject/units";
+import dayjs from "dayjs";
 
 const StyledBox = styled(Box)({
   display: "flex",
@@ -27,6 +28,12 @@ const Presale = () => {
   const presaleContract = usePresaleContract(signer);
   const tokenContract = useTokenContract(signer);
 
+  const unixTimestamp = 1701500627;
+  const [currentTime, setCurrentTime] = useState(dayjs.unix(unixTimestamp));
+
+  // const unixTimestamp = 1701500627;
+  // const formattedTime = dayjs.unix(unixTimestamp).format("YYYY-MM-DD HH:mm:ss");
+  // console.log(formattedTime);
   // Token read function
   const [tokenName, setTokenName] = useState("");
   const [tokenDecimal, setTokenDecimal] = useState("");
@@ -40,29 +47,33 @@ const Presale = () => {
   const [tokenAmount, setTokenAmount] = useState();
 
   const init = async () => {
-    const decimal = await tokenContract.decimals();
-    setTokenDecimal(decimal);
-    const tokenNames = await tokenContract.name();
-    setTokenName(tokenNames);
-    const symbols = await tokenContract.symbol();
-    setTokenSymbol(symbols);
-    const supply = await tokenContract.totalSupply();
-    setTokenSupply(formatUnits(supply.toString(), 18));
+    try {
+      const decimal = await tokenContract.decimals();
+      setTokenDecimal(decimal);
+      const tokenNames = await tokenContract.name();
+      setTokenName(tokenNames);
+      const symbols = await tokenContract.symbol();
+      setTokenSymbol(symbols);
+      const supply = await tokenContract.totalSupply();
+      setTokenSupply(formatUnits(supply.toString(), 18));
 
-    const minAmounts = await presaleContract.minAmount();
-    const maxAmounts = await presaleContract.maxAmount();
+      const minAmounts = await presaleContract.minAmount();
+      const maxAmounts = await presaleContract.maxAmount();
 
-    const maxContribution = await presaleContract.soldToken();
-    setSoldTokens(formatUnits(maxContribution).toString(), "soldToken");
+      const maxContribution = await presaleContract.soldToken();
+      setSoldTokens(formatUnits(maxContribution).toString(), "soldToken");
 
-    const claimTokens = await presaleContract.claimed(account);
-    console.log(claimTokens); ////
-    setClaimToken(claimTokens);
+      const claimTokens = await presaleContract.claimed(account);
+      setClaimToken(claimTokens);
+      console.log(claimTokens, "claim token ______");
 
-    setLimit({
-      min: Number(formatUnits(minAmounts.toString(), 18)),
-      max: Number(formatUnits(maxAmounts.toString(), 18)),
-    });
+      setLimit({
+        min: Number(formatUnits(minAmounts.toString(), 18)),
+        max: Number(formatUnits(maxAmounts.toString(), 18)),
+      });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const token = async () => {
@@ -72,9 +83,7 @@ const Presale = () => {
     setBnbToToken(formatUnits(bnbToTokens.toString(), "18"));
   };
 
-  // console.log(limit.min, "limit.min");
-
-  const BuyToken = async () => {
+  const buyToken = async () => {
     if (!tokenAmount) {
       alert("enter somthing");
     } else if (tokenAmount <= 0) {
@@ -93,6 +102,16 @@ const Presale = () => {
       }
     }
   };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime((prevTime) => prevTime.add(1, "second"));
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     init();
@@ -119,7 +138,7 @@ const Presale = () => {
         <Typography variant="h6">Tokens</Typography>
         <TextField variant="outlined" type="number" value={bnbToToken} />
 
-        <Button variant="contained" onClick={BuyToken}>
+        <Button variant="contained" onClick={buyToken}>
           Buy
         </Button>
       </Box>
@@ -148,6 +167,9 @@ const Presale = () => {
       <StyledBox>
         <Typography>Claimable Token</Typography>
         <Typography>{claimToken}</Typography>
+      </StyledBox>
+      <StyledBox>
+        <div>Current Time: {currentTime.format("YYYY-MM-DD HH:mm:ss")}</div>
       </StyledBox>
     </Container>
   );
